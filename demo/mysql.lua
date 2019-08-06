@@ -1,8 +1,10 @@
 local cjson = require "cjson"
 local resty_md5 = require "resty.md5"
 local str = require "resty.string"
-local mysqlClient = require "mysqlClient"
+local mysql = require "mysqlClient"
 local util = require "util"
+
+mysqlClient = mysql:new()
 
 local res, err = mysqlClient:getVar("select account from member WHERE 1 limit 2")
 util.say("get var ", res, " ", err)
@@ -30,3 +32,8 @@ util.say("exec affect row ", num, " ", err)
 
 local sql, err = mysqlClient:prepare("SELECT * FROM userlogs WHERE id = ? AND id > ?", { 2, 0 })
 util.say("prepare", sql, err)
+
+
+util.say("reuse times", mysqlClient:reuseTime())
+
+mysqlClient:close()

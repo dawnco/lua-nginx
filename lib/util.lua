@@ -3,7 +3,15 @@ util = {
 
 function util.say(...)
     local args = { ... }
-    ngx.say(table.concat(args, " "), "<br>")
+
+    local new = {}
+    for key, val in pairs(args) do
+        if val then
+            table.insert(new, val)
+        end
+    end
+
+    ngx.say(table.concat(new, " "), "<br>")
 end
 
 return util

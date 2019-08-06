@@ -4,24 +4,32 @@ local mysql = require "resty.mysql"
 local config = require "config"
 
 _M = {
-    _inited = false,
-    link = nil
+    link = nil,
 }
+
+function _M:new()
+    local o = {}
+    setmetatable(o, self)
+    self.__index = self
+
+    o:init()
+
+    return o
+end
 
 function _M:init()
 
-    if self._inited then
-        return true
+    if not self.link then
+        local db, err = mysql:new()
+        if not db then
+            return false, err
+        end
+        self._inited = true
+        db:set_timeout(1000) -- 1 sec
+        self.link = db
     end
 
-    local db, err = mysql:new()
-    if not db then
-        return false, err
-    end
-
-    db:set_timeout(1000) -- 1 sec
-
-    local ok, err, errcode, sqlstate = db:connect {
+    local ok, err, errcode, sqlstate = self.link:connect {
         host = config.mysql.host,
         port = config.mysql.port,
         database = config.mysql.database,
@@ -30,22 +38,18 @@ function _M:init()
         charset = config.mysql.charset,
         max_packet_size = 1024 * 1024,
     }
-
     if not ok then
         return false, err
     end
-
-    self.link = db
-    self._inited = true
 
     return true
 end
 
 function _M:getData(sql)
-    local ok, err = self:init()
-    if not ok then
-        return false, err
-    end
+    --local ok, err = self:init()
+    --if not ok then
+    --    return false, err
+    --end
 
     local res, err, errcode, sqlstate = self.link:query(sql)
     if not res then
@@ -84,10 +88,10 @@ end
 
 function _M:insert(tableName, data)
 
-    local ok, err = self:init()
-    if not ok then
-        return false, err
-    end
+    --local ok, err = self:init()
+    --if not ok then
+    --    return false, err
+    --end
 
     local field = {}
     local value = {}
@@ -111,10 +115,10 @@ end
 
 function _M:update(tableName, data, where)
 
-    local ok, err = self:init()
-    if not ok then
-        return false, err
-    end
+    --local ok, err = self:init()
+    --if not ok then
+    --    return false, err
+    --end
 
     local field = {}
     local whereSql = {}
@@ -140,11 +144,11 @@ function _M:update(tableName, data, where)
 end
 
 function _M:delete(tableName, where)
-
-    local ok, err = self:init()
-    if not ok then
-        return false, err
-    end
+    --
+    --local ok, err = self:init()
+    --if not ok then
+    --    return false, err
+    --end
 
     local whereSql = {}
 
@@ -165,10 +169,10 @@ end
 
 function _M:exec(sql, bind)
 
-    local ok, err = self:init()
-    if not ok then
-        return false, err
-    end
+    --local ok, err = self:init()
+    --if not ok then
+    --    return false, err
+    --end
 
     sql = self:prepare(sql, bind)
 
@@ -179,6 +183,12 @@ function _M:exec(sql, bind)
     end
 
     return res.affected_rows
+end
+
+function _M:close()
+    local ok, err = self.link:set_keepalive(config.mysql.max_idle_timeout, config.mysql.pool_size)
+
+    return ok, err
 end
 
 function _M:prepare (sql, bind)
@@ -192,6 +202,11 @@ function _M:prepare (sql, bind)
         table.insert(prepare, ngx.quote_sql_str(val))
     end
     return string.format(string.gsub(sql, "?", "%%s"), unpack(prepare))
+end
+
+function _M:reuseTime()
+    local times, err = self.link:get_reused_times()
+    return times, err
 end
 
 return _M
