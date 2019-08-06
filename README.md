@@ -20,3 +20,10 @@ server{
     }
 }
 ```
+
+
+## 测试
+
+访问
+http://localhost/demo/mysql
+http://localhost/demo/redis
