@@ -9,6 +9,6 @@ return {
         database = "redpacket",
         user = "root",
         password = "Q,Fflgfye6w.",
-        charset = 'utf8'
+        charset = 'utf8mb4'
     }
 }

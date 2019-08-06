@@ -1,5 +1,5 @@
 --see https://github.com/openresty/lua-resty-mysql
-
+local cjson = require "cjson"
 local mysql = require "resty.mysql"
 local config = require "config"
 
@@ -11,13 +11,12 @@ _M = {
 function _M:init()
 
     if self._inited then
-        return
+        return true
     end
 
     local db, err = mysql:new()
     if not db then
-        error(err)
-        return
+        return false, err
     end
 
     db:set_timeout(1000) -- 1 sec
@@ -33,24 +32,166 @@ function _M:init()
     }
 
     if not ok then
-        error("failed to connect: " .. err .. ": " .. errcode .. " " .. sqlstate)
-        return
+        return false, err
     end
 
     self.link = db
-
     self._inited = true
+
+    return true
+end
+
+function _M:getData(sql)
+    local ok, err = self:init()
+    if not ok then
+        return false, err
+    end
+
+    local res, err, errcode, sqlstate = self.link:query(sql)
+    if not res then
+        return false, err
+    end
+    return res
+end
+
+function _M:getLine(sql)
+
+    local res, err = self:getData(sql)
+
+    local res, err, errcode, sqlstate = self.link:query(sql)
+    if not res then
+        return false, err
+    end
+    local len = table.getn(res)
+    if len >= 1 then
+        return res[1]
+    end
+    return false
 end
 
 function _M:getVar(sql)
-    self:init()
-    local res, err, errcode, sqlstate =
-    self.link:query(sql)
+    local res, err = self:getLine(sql)
     if not res then
-        error("query error: " .. err .. ": " .. errcode .. " " .. sqlstate)
-        return
+        return false, err
     end
 
+    local val = false
+    for key, value in pairs(res) do
+        val = value
+    end
+    return val
+end
+
+function _M:insert(tableName, data)
+
+    local ok, err = self:init()
+    if not ok then
+        return false, err
+    end
+
+    local field = {}
+    local value = {}
+
+    for key, val in pairs(data) do
+        table.insert(field, key)
+        table.insert(value, ngx.quote_sql_str(val))
+    end
+
+    local sql = string.format("INSERT INTO `%s` (%s) VALUE (%s)", tableName, table.concat(field, ','), table.concat(value, ','))
+
+    local res, err, errcode, sqlstate = self.link:query(sql)
+
+    if not res then
+        return false, err
+    end
+
+    return res.insert_id
+
+end
+
+function _M:update(tableName, data, where)
+
+    local ok, err = self:init()
+    if not ok then
+        return false, err
+    end
+
+    local field = {}
+    local whereSql = {}
+
+    for key, val in pairs(data) do
+        table.insert(field, string.format("`%s` = %s", key, ngx.quote_sql_str(val)))
+    end
+
+    for key, val in pairs(where) do
+        table.insert(whereSql, string.format("`%s` = %s", key, ngx.quote_sql_str(val)))
+    end
+
+    local sql = string.format("UPDATE `%s` SET %s WHERE %s", tableName, table.concat(field, ','), table.concat(whereSql, ' AND '))
+
+    local res, err, errcode, sqlstate = self.link:query(sql)
+
+    if not res then
+        return false, err
+    end
+
+    return res.affected_rows
+
+end
+
+function _M:delete(tableName, where)
+
+    local ok, err = self:init()
+    if not ok then
+        return false, err
+    end
+
+    local whereSql = {}
+
+    for key, val in pairs(where) do
+        table.insert(whereSql, string.format("`%s` = %s", key, ngx.quote_sql_str(val)))
+    end
+
+    local sql = string.format("DELETE FROM `%s` WHERE %s", tableName, table.concat(whereSql, ' AND '))
+
+    local res, err, errcode, sqlstate = self.link:query(sql)
+
+    if not res then
+        return false, err
+    end
+
+    return res.affected_rows
+end
+
+function _M:exec(sql, bind)
+
+    local ok, err = self:init()
+    if not ok then
+        return false, err
+    end
+
+    sql = self:prepare(sql, bind)
+
+    local res, err, errcode, sqlstate = self.link:query(sql)
+
+    if not res then
+        return false, err
+    end
+
+    return res.affected_rows
+end
+
+function _M:prepare (sql, bind)
+
+    if bind == nil then
+        return sql
+    end
+
+    local prepare = {}
+    for key, val in pairs(bind) do
+        table.insert(prepare, ngx.quote_sql_str(val))
+    end
+    return string.format(string.gsub(sql, "?", "%%s"), unpack(prepare))
 end
 
 return _M
