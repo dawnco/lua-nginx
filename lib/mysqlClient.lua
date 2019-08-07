@@ -9,12 +9,10 @@ _M = {
 
 function _M:new()
     local o = {}
-    setmetatable(o, self)
-    self.__index = self
+    setmetatable(o, {__index = self})
+    local ok, err = o:init()
 
-    o:init()
-
-    return o
+    return o, err
 end
 
 function _M:init()
@@ -115,11 +113,6 @@ end
 
 function _M:update(tableName, data, where)
 
-    --local ok, err = self:init()
-    --if not ok then
-    --    return false, err
-    --end
-
     local field = {}
     local whereSql = {}
 
@@ -144,11 +137,6 @@ function _M:update(tableName, data, where)
 end
 
 function _M:delete(tableName, where)
-    --
-    --local ok, err = self:init()
-    --if not ok then
-    --    return false, err
-    --end
 
     local whereSql = {}
 
@@ -169,10 +157,6 @@ end
 
 function _M:exec(sql, bind)
 
-    --local ok, err = self:init()
-    --if not ok then
-    --    return false, err
-    --end
 
     sql = self:prepare(sql, bind)
 
@@ -187,7 +171,6 @@ end
 
 function _M:close()
     local ok, err = self.link:set_keepalive(config.mysql.max_idle_timeout, config.mysql.pool_size)
-
     return ok, err
 end
 

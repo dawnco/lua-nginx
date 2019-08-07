@@ -27,3 +27,6 @@ server{
 访问
 http://localhost/demo/mysql
 http://localhost/demo/redis
+
+说明
+要开启代码缓存 连接池才有用
