@@ -1,3 +1,8 @@
+
+-- author daw
+-- date 2019-08-07
+
+
 --see https://github.com/openresty/lua-resty-mysql
 local cjson = require "cjson"
 local mysql = require "resty.mysql"
@@ -11,7 +16,6 @@ function _M:new()
     local o = {}
     setmetatable(o, {__index = self})
     local ok, err = o:init()
-
     return o, err
 end
 
@@ -36,6 +40,7 @@ function _M:init()
         charset = config.mysql.charset,
         max_packet_size = 1024 * 1024,
     }
+
     if not ok then
         return false, err
     end

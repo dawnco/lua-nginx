@@ -5,11 +5,13 @@ local mysqlClient = require "mysqlClient"
 local util = require "util"
 
 local client = mysqlClient:new()
+ client = mysqlClient:new()
+
 
 local res, err = client:getVar("select account from member WHERE 1 limit 2")
 util.say("get var ", res, " ", err)
 
-local res, err = client:getData("select account from member WHERE 1 limit 2")
+local res, err = client:getData("select account from member")
 util.say("get data ", cjson.encode(res), " ", err)
 
 local res, err = client:getLine("select account from member WHERE 1 limit 2")
@@ -24,7 +26,7 @@ util.say("insert id ", id, " ", err)
 local num, err = client:update("userlogs", { userId = 100000, account = "go1od" }, { userId = 100000 })
 util.say("update affect row ", num, " ", err)
 
-local num, err = client:delete("userlogs", { userId = 100000 })
+local num, err = client:delete("userlogs", { id = 100000 })
 util.say("delete affect row ", num, " ", err)
 
 local num, err = client:exec("DELETE FROM userlogs WHERE id < ?", { 20 })

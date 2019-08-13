@@ -1,4 +1,6 @@
-util = {
+-- author daw
+-- date 2019-08-07
+local util = {
 }
 
 function util.say(...)
@@ -13,5 +15,7 @@ function util.say(...)
 
     ngx.say(table.concat(new, " "), "<br>")
 end
+
+
 
 return util
