@@ -12,6 +12,11 @@ local function push_data(premature, logs)
 	local client = mysqlClient:new()
 	
 	local id, err = client:insert("debug_http_logs", logs)
+	
+	-- 保留当天的数据
+	local num, err = client:exec("DELETE FROM debug_http_logs WHERE host = ? AND created < ? ", { logs.host, ngx.today() })
+	
+	
 end
 
 
