@@ -1,4 +1,4 @@
 .idea/
-.svn/
 data
 *.log
+config.lua

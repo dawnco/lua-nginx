@@ -7,6 +7,12 @@ cd openresty-1.15.8.1
 make && make install
 ```
 
+复制 lib/config.example.lua 到 lib/config.lua
+修改 mysql 配置 
+```
+lib/config.lua
+```
+
 ## openresty 配置, server 里加入
 ```
 lua_package_path "/home/web/lua/lib/?.lua;;";
@@ -26,6 +32,7 @@ server{
 
 访问
 http://localhost/demo/mysql
+
 http://localhost/demo/redis
 
 说明
