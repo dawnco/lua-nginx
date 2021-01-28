@@ -39,26 +39,25 @@ http://localhost/demo/redis
 要开启代码缓存 连接池才有用
 
 
-# 代理
+# 记录请求的内容
 
 ```
 lua_package_path "/home/web/lua/lib/?.lua;;";
-    server {
-        server_name api.com;
-		listen 8080 ;
-		body_filter_by_lua_file /home/web/lua/httpLogs.lua;
-		root /www/loan-app-api/src/app/www;
-        location / {
-			try_files $uri $uri/ /index.php?$query_string;
-        }
-
-		location ~ \.php$ {
-			fastcgi_pass 127.0.0.1:9000;
-			fastcgi_index  index.php;
-			fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
-			include        fastcgi_params;
-		}
+server {
+    server_name api.com;
+    listen 8080 ;
+    body_filter_by_lua_file /home/web/lua/httpLog.lua;
+    root /www/loan-app-api/src/app/www;
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+    location ~ \.php$ {
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+        include        fastcgi_params;
     }
 }
+
 
 ```
